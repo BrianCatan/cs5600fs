@@ -110,7 +110,18 @@ loop do
 
     when 'GET'
       # GET filename.track
-      
+      if File.exist? command[1]
+        md5 = ''
+        File.foreach('command[1]') do |line|
+          if line.split(':')[0] == 'MD5'
+            md5 = line.split(:)[1]
+            md5[0] = ''
+          end
+        end
+        client.puts '<REP GET BEGIN>'
+        client.puts '<#{File.read command[1]}>'
+        client.puts '<REP GET END #{md5}>'
+      end
 
     else client.puts 'Improper command -- ' + command_phrase
     end
