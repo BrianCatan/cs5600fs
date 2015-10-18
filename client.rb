@@ -19,12 +19,12 @@ loop do
   command = gets.chomp
   case command.split()[0]
   when 'createtracker'
-    puts 'hi mom'
     #createtracker filepath desc yourip yourport
     input = command.split
     command = "<createtracker #{input[1]} #{File.size(input[1])} #{input[2]} #{Digest::MD5.file(input[1]).hexdigest} #{input[3]} #{input[4]}>"
     
     sock.print command
-    puts sock.recv
+    line =s.gets
+    puts line
   end
 end
