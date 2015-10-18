@@ -23,8 +23,7 @@ loop do
     input = command.split
     command = "<createtracker #{input[1]} #{File.size(input[1])} #{input[2]} #{Digest::MD5.file(input[1]).hexdigest} #{input[3]} #{input[4]}>"
     
-    sock.print command
-    line =s.gets
-    puts line
+    sock.puts command
+    puts sock.gets
   end
 end

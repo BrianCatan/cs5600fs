@@ -7,11 +7,12 @@ server = TCPServer.open 8686
 loop do
   # On each request spawn a listener thread
   Thread.start(server.accept) do |client|
-    command_phrase = client.gets.chomp.chomp
-    puts command_phrase
+    command_phrase = client.gets.chomp
     command_phrase[0] = ''
+    command_phrase[-1] = ''
     command = command_phrase.split
-
+    puts command_phrase
+    
     # Parse command
     case command[0]
 
@@ -21,8 +22,10 @@ loop do
         if File.exist? "#{command[1]}.track"
           # Disallow duplicate trackers
           client.puts '<createtracker ferr>'
+          puts 'Duplicate tracker'
         else
           # Create the new tracker file
+          puts 'Create new tracker'
           new_tracker = File.new "#{command[1]}.track", 'w'
           new_tracker.puts "Filename: #{command[1]}"
           new_tracker.puts "Filesize: #{command[2]}"
@@ -30,12 +33,13 @@ loop do
           new_tracker.puts "MD5: #{command[4]}"
           new_tracker.puts ''
           new_tracker.puts "# Begin seeding peers"
-          new_tracker.puts "#{command[5]}:#{command[6]}:0:#{command[2]}:#{Time.new(::now).to_i}"
+          new_tracker.puts "#{command[5]}:#{command[6]}:0:#{command[2]}:#{Time.now.to_i}"
           new_tracker.close
 
           client.puts '<createtracker succ>'
         end
       rescue
+        puts $!.message
         # On error remove file to prevent malformed trackers
         if File.exist?  "#{command[1]}.track"
           File.delete "#{command[1]}.track"
@@ -59,7 +63,7 @@ loop do
               end
             end
             # Append new information to tracker file and delete old tracker
-            update_tracker.puts "#{command[4]}:#{command[5]}:#{command[2]}:#{command[3]}:#{Time.new(::now).to_i}"
+            update_tracker.puts "#{command[4]}:#{command[5]}:#{command[2]}:#{command[3]}:#{Time.now.to_i}"
             File.delete "#{command[1]}.track"
           end
           # Rename new tracker
