@@ -85,30 +85,31 @@ loop do
       end
       
       files = Dir.entries '.'
-      files.each { |f_name|
-        if f_name.split('.')[-1] != 'track'
-          files.delete "#{f_name}"
+      trackers = []
+      for f_name in files do
+        if f_name.split('.')[-1] == 'track'
+          trackers.push f_name
         end
-      }
-      client.puts "<REP LIST #{files.length}>"
+      end
+      client.puts "<REP LIST #{trackers.length}>"
       file_num = 1
-      files.each { |f_name|
+      trackers.each do |f_name|
         size = ''
         md5 = ''
-        File.foreach("#{f_name}.track") do |line|
+        File.foreach("#{f_name}") do |line|
           if line.split(':')[0] == 'Filesize'
             size = line.split(':')[1]
             size[0] = ''
-          else if line.split(':')[0] == 'MD5'
+          elsif line.split(':')[0] == 'MD5'
             md5 = line.split(':')[1]
             md5[0] = ''
           end
-          
-          break if md5 != '' and size != '' end
+          break if md5 != '' and size != ''
         end
+        
         client.puts "<#{file_num} #{f_name} #{size} #{md5}>"
         file_num += 1
-      }
+      end
       client.puts '<REP LIST END>'
 
     when 'GET'
@@ -123,7 +124,7 @@ loop do
         end
         client.puts '<REP GET BEGIN>'
         client.puts "<#{File.read command[1]}>"
-        client.puts '<REP GET END #{md5}>'
+        client.puts "<REP GET END #{md5}>"
       end
 
     else client.puts "Improper command -- #{command_phrase}"
