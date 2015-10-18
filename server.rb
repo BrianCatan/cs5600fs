@@ -1,13 +1,14 @@
 require 'socket'
 
-# Open server on port 4000
-server = TCPServer.open 4000
+# Open server on port 8686
+server = TCPServer.open 8686
 
 # Continually listen for incoming connection requests
 loop do
   # On each request spawn a listener thread
   Thread.start(server.accept) do |client|
     command_phrase = client.gets.chomp.chomp
+    puts command_phrase
     command_phrase[0] = ''
     command = command_phrase.split
 
@@ -17,7 +18,7 @@ loop do
     when 'createtracker'
       # createtracker filename filesize description md5 ip-address port-number
       begin
-        if File.exist? '#{command[1]}.track'
+        if File.exist? "#{command[1]}.track"
           # Disallow duplicate trackers
           client.puts '<createtracker ferr>'
         else
