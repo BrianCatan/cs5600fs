@@ -17,10 +17,10 @@ server = TCPServer.open(8687)
 Thread.new {
   loop {
     Thread.start(server.accept) do |client|
-      out_file = client.gets
+      out_file = client.gets.chomp
       puts out_file
-      puts IO.read(out_file)
-      client.puts IO.read(out_file)
+      contents = File.open(out_file, "rb") { |f| f.read }
+      client.puts contents
       client.close
     end
   }
