@@ -68,8 +68,7 @@ loop do
       end
     end
     
-    #puts "#{filename} #{filesize} #{md5} #{ip} #{port}"
-    #if input.split()[3] == md5
+    if input.split()[3] == "#{md5.chomp}>"
       # Contact peer for file
       inc_sock = TCPSocket.open(ip, port)
       inc_sock.puts filename
@@ -77,6 +76,6 @@ loop do
       file = File.open("#{filename}.tmp", 'wb')
       file.print data
       file.close
-   # end
+    end
   end
 end

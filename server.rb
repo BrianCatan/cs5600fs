@@ -14,7 +14,6 @@ loop do
     command_phrase[0] = ''
     command_phrase[-1] = ''
     command = command_phrase.split
-    puts command_phrase
     
     # Parse command
     case command[0]
@@ -28,7 +27,6 @@ loop do
           puts 'Duplicate tracker'
         else
           # Create the new tracker file
-          puts 'Create new tracker'
           new_tracker = File.new "./Torrents/#{command[1]}.track", 'w'
           new_tracker.puts "Filename: #{command[1]}"
           new_tracker.puts "Filesize: #{command[2]}"
@@ -70,7 +68,7 @@ loop do
             File.delete "./Torents/#{command[1]}.track"
           end
           # Rename new tracker
-          File.rename "./Torrents/#{command[1]}.track.tmp", "Torrents//#{command[1]}.track"
+          File.rename "./Torrents/#{command[1]}.track.tmp", "./Torrents/#{command[1]}.track"
           client.puts "<updatetracker #{command[1]} succ>"
         end
       rescue
@@ -122,17 +120,16 @@ loop do
         File.foreach("./Torrents/#{command[1]}") do |line|
           if line.split(':')[0] == 'MD5'
             md5 = line.split(': ')[1]
-            md5[0] = ''
           end
         end
         client.puts '<REP GET BEGIN>'
         contents = File.read "./Torrents/#{command[1]}"
-        client.puts "<#{contents}>"
+        client.puts "<#{contents.chomp}>"
         client.puts "<REP GET END #{md5.chomp}>"
       end
 
     else client.puts "Improper command -- #{command_phrase}"
     end
+    sleep(1.0/10.0)
   end
-  sleep(1.0/10.0)
 end
