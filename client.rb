@@ -3,14 +3,14 @@ require 'digest'
 require 'ipaddress'
 
 # Connect to torrent server
-sock = TCPSocket.open('localhost', 8686)
+sock = TCPSocket.open('localhost', ARGV[0].to_i)
 
 if !Dir.exist? 'Files' 
   Dir.mkdir 'Files'
 end
 
 # Create thread to manage file requests from other peers
-server = TCPServer.open(8687)
+server = TCPServer.open(ARGV[1].to_i)
 Thread.new {
   loop {
     begin
@@ -24,6 +24,8 @@ Thread.new {
     end
   }
 }
+
+ARGV.clear
 
 loop do
   print "ptpterminal: "
