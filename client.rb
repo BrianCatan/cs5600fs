@@ -5,16 +5,22 @@ require 'ipaddress'
 # Connect to torrent server
 sock = TCPSocket.open('localhost', 8686)
 
-# Cretae thread to manage file requests from other peers
+if !Dir.exist? 'Files' 
+  Dir.mkdir 'Files'
+end
+
+# Create thread to manage file requests from other peers
 server = TCPServer.open(8687)
 Thread.new {
   loop {
-    Thread.start(server.accept) do |client|
-      out_file = client.gets.chomp
-      puts out_file
-      contents = File.open(out_file, "rb") { |f| f.read }
-      client.puts contents
-      client.close
+    begin
+      Thread.start(server.accept) do |client|
+        out_file = client.gets.chomp
+        contents = File.open("./Files/#{out_file}", "rb") { |f| f.read }
+        client.puts contents
+        client.close
+      end
+    rescue 
     end
   }
 }
@@ -28,7 +34,9 @@ loop do
   when 'createtracker'
     # createtracker filepath desc yourip yourport
     input = command.split
-    sock.puts "<createtracker #{input[1]} #{File.size(input[1])} #{input[2]} #{Digest::MD5.file(input[1]).hexdigest} #{input[3]} #{input[4]}>"
+    size = File.size("./Files/#{input[1]}")
+    md5 = Digest::MD5.file("./Files/#{input[1]}").hexdigest
+    sock.puts "<createtracker #{input[1]} #{size} #{input[2]} #{md5} #{input[3]} #{input[4]}>"
     msg = sock.gets.chomp
     if msg == "<createtracker succ>" 
       puts "  #{input[1]}.track created"
@@ -68,14 +76,14 @@ loop do
   
   when 'GET'
     # Get information about peers
-    sock.puts "<GET #{command.split()[1]}.track>"
+    sock.puts "<GET #{command.split()[1]}>"
     input = ''
     filename = ''
     filesize = 0
     md5 = ''
     ip = ''
     port = ''
-    until input.split()[2] == 'END' do
+    until input.split()[2] == 'END' or input == '<GET INVALID>' do
       input = sock.gets
       if input.split(':')[0] == '<Filename'
         filename = input.split(': ')[1]
@@ -94,12 +102,15 @@ loop do
       inc_sock = TCPSocket.open(ip, port)
       inc_sock.puts filename
       data = inc_sock.read
-      file = File.open("#{filename}.tmp", 'wb')
+      file = File.open("./Files/#{filename.chomp}", 'wb')
       file.print data
       file.close
+    else 
+      puts '  GET failed for #{command.split()[1]}'
     end
     
   when 'exit'
+    sock.puts ''
     abort
     
   when 'help'
@@ -112,7 +123,7 @@ loop do
     puts "  help"
   
   else 
-    puts "Improper command -- #{command}"
+    puts "  Improper command -- #{command}"
   end
   
 end
