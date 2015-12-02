@@ -51,14 +51,19 @@ Thread.new {
       Thread.start(server.accept) do |client|
         message = client.gets
         message = message.split()
-        if message[2].to_i > 1024
-          contents = "<GET invalid>"
-        elsif (message[1].to_i + message[2].to_i) > File.size("./Files/#{message[0]}")
-          contents = File.read("./Files/#{message[0]}", File.size("./Files/#{message[0]}") - message[1].to_i, message[1].to_i)
-        else
-          contents = File.read("./Files/#{message[0]}", message[2].to_i, message[1].to_i)
+        
+        if !File.exist? "./Files/#{message[0]}"
+	      message[0] = "#{message[0].part}#{(message[1].to_f/message[2].to_f).ceil}"
         end
-        client.puts contents
+        
+        if message[2].to_i > 1024
+	          contents = "<GET invalid>"
+	        elsif (message[1].to_i + message[2].to_i) > File.size("./Files/#{message[0]}")
+	          contents = File.read("./Files/#{message[0]}", File.size("./Files/#{message[0]}") - message[1].to_i, message[1].to_i)
+	        else
+	          contents = File.read("./Files/#{message[0]}", message[2].to_i, message[1].to_i)
+	      end
+	      client.puts contents
         client.close
       end
     rescue 
@@ -177,7 +182,7 @@ loop do
               file.print data
               file.close
               inc_sock.close
-              updatetracker filename 0 (chunksize * iter + chunksize < filename.size ? chunksize * iter + chunksize : filename.size) ip port
+              updatetracker filename.chomp, 0, (chunksize * iter + chunksize < filesize ? chunksize * iter + chunksize : filesize), ip, port
             end
             iter += 1
           end
