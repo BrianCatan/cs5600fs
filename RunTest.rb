@@ -8,7 +8,7 @@ server = Thread.new {
 }
 sleep 1
 
-# Start the first two clients and begin seeding
+# Start the first two clients and begin seeding; closes them after 2 minutes
 client1 = Thread.new {
   PTY.spawn "cd Client1 && ruby client.rb" do |r, w, p|
   
@@ -18,6 +18,8 @@ client1 = Thread.new {
     sleep 1
   
     w.puts 'SEED net.jpg an_icon'
+    sleep 120
+    w.puts 'exit'
   end
 }
 sleep 1
@@ -30,15 +32,16 @@ client2 = Thread.new {
     }
     sleep 1
     w.puts 'SEED sp.mp4 an_episode_of_southpark'
-    
+    sleep 120
+    w.puts 'exit'
   end
 }
 
 sleep 15
 
-# After 15 seconds launch clients 3-8
+# After 15 seconds launch clients 3-8; minute and a half clients 9-13
 i = 3
-until i > 8 do
+until i > 13 do
   eval("
     client#{i} = Thread.new {
       PTY.spawn 'cd Client#{i} && ruby client.rb' do |r, w, p|
@@ -55,6 +58,9 @@ until i > 8 do
     }
   ")
   i += 1
+  if i == 9
+    sleep 90
+  end
 end
 
 sleep 10000
@@ -63,6 +69,6 @@ server.exit
 client1.exit
 client2.exit
 i = 3
-until i > 8 do
+until i > 13 do
 eval("client#{i}.exit")
 end
