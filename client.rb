@@ -175,7 +175,7 @@ loop do
               file.print data
               file.close
               inc_sock.close
-              
+              updatetracker filename 0 (chunksize * iter + chunksize < filename.size ? chunksize * iter + chunksize : filename.size) ip port
             end
             iter += 1
           end
