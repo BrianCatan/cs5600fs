@@ -50,10 +50,12 @@ def run_get(tracker)
     chunksize = read_config('chunksize').to_i
     count=0
     until seederchunks.size == (filesize.to_f / chunksize.to_f).ceil do
-      if !seederheap.empty?
-		    seederchunks[count] = seederq.last
-		    seederq.pop.push
-		    count+=1
+      seederarray.each do |n|
+        if n.split()[0] == seederq.last
+			    seederchunks[count] = n
+			    seederq.push(seederq.pop)
+			    count+=1
+	    	end
 	    end
     end
     
