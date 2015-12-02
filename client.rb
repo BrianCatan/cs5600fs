@@ -51,7 +51,9 @@ Thread.new {
       Thread.start(server.accept) do |client|
         message = client.gets
         message = message.split()
-        if (message[1].to_i + message[2].to_i) > File.size("./Files/#{message[0]}")
+        if message[2].to_i > 1024
+          contents = "<GET invalid>"
+        elsif (message[1].to_i + message[2].to_i) > File.size("./Files/#{message[0]}")
           contents = File.read("./Files/#{message[0]}", File.size("./Files/#{message[0]}") - message[1].to_i, message[1].to_i)
         else
           contents = File.read("./Files/#{message[0]}", message[2].to_i, message[1].to_i)
