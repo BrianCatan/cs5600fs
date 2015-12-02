@@ -7,6 +7,7 @@ if !Dir.exist? 'Files'
   Dir.mkdir 'Files'
 end
 
+#check for config file
 if !File.exist? 'client.config'
   config = File.new "client.config", 'w'
   config.puts "ip: localhost"
@@ -16,6 +17,7 @@ if !File.exist? 'client.config'
   config.close
 end
 
+#Read config file method
 def read_config(config_param)
   File.foreach("client.config") do |line|
     if line.split(':')[0] == config_param
@@ -46,7 +48,8 @@ Thread.new {
     begin
       Thread.start(server.accept) do |client|
         out_file = client.gets.chomp
-        contents = File.open("./Files/#{out_file}", "rb") { |f| f.read }
+        out_bytes = client.gets.chomp
+        contents = File.open("./Files/#{out_file}", "rb") { |f| f.read(out_bytes) }
         client.puts contents
         client.close
       end
@@ -120,6 +123,7 @@ loop do
       # Contact peer for file
       inc_sock = TCPSocket.open(ip, port)
       inc_sock.puts filename
+      inc_sock.puts read_config(chunksize)
       data = inc_sock.read
       file = File.open("./Files/#{filename.chomp}", 'wb')
       file.print data
