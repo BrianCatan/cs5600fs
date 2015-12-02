@@ -15,6 +15,7 @@ if !File.exist? 'client.config'
   config.puts "serverip: localhost"
   config.puts "serverport: 8686"
   config.puts "chunksize: 1024"
+  config.puts "updatetime: 900"
   config.close
 end
 
@@ -179,6 +180,7 @@ loop do
     
   when 'exit'
     sock.puts ''
+    puts 'TERMINATING CONNECTION'
     abort
     
   when 'help'
