@@ -111,6 +111,9 @@ loop do
     md5 = ''
     ip = ''
     port = ''
+    time = ''
+    sbyte = ''
+    ebyte = ''
     seederarray = Array.new
     index = 0
     until input.split()[2] == 'END' or input == '<GET INVALID>' do
@@ -122,9 +125,13 @@ loop do
       elsif input.split(':')[0] == 'MD5'
         md5 = input.split(': ')[1]
       elsif IPAddress.valid?(input.split(':')[0]) or input.split(':')[0] == 'localhost'
-        ip = input.split(':')[0]
-        port = input.split(':')[1]
-        seederarray[index] = "#{ip} #{port}"
+        input = input.split(':')
+        ip = input[0]
+        port = input[1]
+        sbyte = input[2]
+        ebyte = input[3]
+        time = input[4]
+        seederarray[index] = "#{time} #{ip} #{port} #{sbyte} #{ebyte}"
         index+=1
       end
     end
@@ -143,8 +150,8 @@ loop do
       seederarray.each do |s|
         Thread.new {
           seeder = s
-          ip = seeder.split()[0]
-          port = seeder.split()[1]            
+          ip = seeder.split()[1]
+          port = seeder.split()[2]            
           iter = 0
           puts "num chunks: #{seederchunks.size}"
           until iter > seederchunks.size do
