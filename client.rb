@@ -139,11 +139,19 @@ loop do
     if input.split()[3] == "#{md5.chomp}>"
       # Contact peer for file
       seederchunks = Array.new
+      seederarray.each do |q|
+		seederq[q] = q.split()[0]
+      end
+      seederq.sort
+      #seederheap = Maxheap.new(seederarray[].split()[0])->new_heap
       chunksize = read_config('chunksize').to_i
       count=0
       until seederchunks.size == (filesize.to_f / chunksize.to_f).ceil do
-        seederchunks[count] = seederarray[count%index]
-        count+=1
+        if !seederheap.empty?
+			seederchunks[count] = seederq.last
+			seederq.pop.push
+			count+=1
+		end
       end
       
       # Create thread to download from each seeder
@@ -167,6 +175,7 @@ loop do
               file.print data
               file.close
               inc_sock.close
+              
             end
             iter += 1
           end
@@ -193,7 +202,7 @@ loop do
         iter += 1
       end
 
-      #updatetracker filename, 0, File.size("./Files/#{filename}"), read_config('ip'), read_config('port')
+      #updatetracker filename, 0, File.size("./Files/#{filename}"), start read_config('ip'), read_config('port')
     else 
       puts '  GET failed for #{command.split()[1]}'
     end
