@@ -27,10 +27,6 @@ def read_config(config_param)
   end
 end
 
-#Read specific set of bytes from a file
-def read_bytes(byte_index)
-	
-
 # Connect to torrent server
 sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
 
@@ -52,9 +48,13 @@ Thread.new {
   loop {
     begin
       Thread.start(server.accept) do |client|
-        out_file = client.gets.chomp
-        out_bytes = client.gets.chomp
-        contents = File.open("./Files/#{out_file}", "rb") { |f| f.read(out_bytes) }
+        message = client.gets
+        message = message.split()
+        if (message[1].to_i + message[2].to_i) > File.size("./Files/#{message[0]}")
+          contents = File.read("./Files/#{message[0]}", File.size("./Files/#{message[0]}") - message[1].to_i, message[1].to_i)
+        else
+          contents = File.read("./Files/#{message[0]}", message[2].to_i, message[1].to_i)
+        end
         client.puts contents
         client.close
       end
@@ -121,30 +121,58 @@ loop do
       elsif input.split(':')[0] == 'MD5'
         md5 = input.split(': ')[1]
       elsif IPAddress.valid?(input.split(':')[0]) or input.split(':')[0] == 'localhost'
-        
         ip = input.split(':')[0]
         port = input.split(':')[1]
+        seederarray[index] = "#{ip} #{port}"
+        index+=1
       end
-      seederarray(index) = ip + port
-      index+=1
     end
     
     if input.split()[3] == "#{md5.chomp}>"
       # Contact peer for file
       seederchunks = Array.new
+      chunksize = read_config('chunksize').to_i
       count=0
-      until seederchunks.size == filesize/read_config(chunksize) do
-        seederchunks(count) = seederarray(count%index)
+      until seederchunks.size == (filesize.to_f / chunksize.to_f).ceil do
+        seederchunks[count] = seederarray[count%index]
         count+=1
       end
-      inc_sock = TCPSocket.open(ip, port)
-      inc_sock.puts filename
-      inc_sock.puts 
-      data = inc_sock.read
-      file = File.open("./Files/#{filename.chomp}", 'wb')
-      file.print data
-      file.close
-      updatetracker filename, 0, File.size("./Files/#{filename}"), read_config('ip'), read_config('port')
+      
+      # Create thread to download from each seeder
+      seederarray.each do |s|
+        Thread.new {
+          seeder = s
+          ip = seeder.split()[0]
+          port = seeder.split()[1]            
+          iter = 0
+          puts "num chunks: #{seederchunks.size}"
+          until iter > seederchunks.size do
+            if seederchunks[iter] == "#{ip} #{port}"
+              inc_sock = TCPSocket.open(ip, port)
+              inc_sock.puts "#{filename.chomp} #{chunksize * iter} #{chunksize}"
+              puts "Requesting bytes #{chunksize * iter} up to #{chunksize * iter + chunksize} of #{filename.chomp} from #{ip}:#{port}"
+              data = inc_sock.read
+              if data.size > chunksize
+                data = data[0, chunksize]
+              end
+              file = File.open("./Files/#{filename.chomp}.part#{iter}", 'wb')
+              file.print data
+              file.close
+              inc_sock.close
+            end
+            iter += 1
+          end
+          print "ptpterminal: "
+          count = 0
+          until count == iter do
+            File.open("./Files/#{filename.chomp}", 'a') { |f| f.print File.binread("./Files/#{filename.chomp}.part#{count}") }
+            File.delete("./Files/#{filename.chomp}.part#{count}")
+            count += 1
+          end
+        }
+      end
+
+      #updatetracker filename, 0, File.size("./Files/#{filename}"), read_config('ip'), read_config('port')
     else 
       puts '  GET failed for #{command.split()[1]}'
     end

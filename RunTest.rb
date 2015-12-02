@@ -29,14 +29,14 @@ client2 = Thread.new {
       loop { puts "client2: #{r.gets}" }
     }
     sleep 1
-    w.puts 'SEED southpark.mp4 an_episode_of_southpark'
+    w.puts 'SEED sp.mp4 an_episode_of_southpark'
     
   end
 }
 
 sleep 15
 
-# After 30 seconds launch clients 3-8
+# After 15 seconds launch clients 3-8
 i = 3
 until i > 8 do
   eval("
@@ -50,14 +50,14 @@ until i > 8 do
         sleep 1
         w.puts 'GET net.jpg.track'
         sleep 1
-        #w.puts 'GET southpark.mp4.track'
+        w.puts 'GET sp.mp4.track'
       end
     }
   ")
   i += 1
 end
 
-sleep 1000
+sleep 10000
 
 server.exit
 client1.exit
