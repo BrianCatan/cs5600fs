@@ -171,10 +171,21 @@ loop do
           puts "num chunks: #{seederchunks.size}"
           until iter > seederchunks.size do
             if seederchunks[iter] == "#{ip} #{port}"
-              inc_sock = TCPSocket.open(ip, port)
-              inc_sock.puts "#{filename.chomp} #{chunksize * iter} #{chunksize}"
-              puts "Requesting bytes #{chunksize * iter} up to #{chunksize * iter + chunksize} of #{filename.chomp} from #{ip}:#{port}"
-              data = inc_sock.read
+              data = ''
+              inc_sock = TCPSocket.new
+              begin
+                inc_sock = TCPSocket.open(ip, port)
+                inc_sock.puts "#{filename.chomp} #{chunksize * iter} #{chunksize}"
+                puts "Requesting bytes #{chunksize * iter} up to #{chunksize * iter + chunksize} of #{filename.chomp} from #{ip}:#{port}"
+                data = inc_sock.read
+              rescue
+                ip = seederchunks[iter + 1].split()[0]
+                port = seederchunks[iter + 1].split()[1]
+                inc_sock = TCPSocket.open(ip, port)
+                inc_sock.puts "#{filename.chomp} #{chunksize * iter} #{chunksize}"
+                puts "Requesting bytes #{chunksize * iter} up to #{chunksize * iter + chunksize} of #{filename.chomp} from #{ip}:#{port}"
+                data = inc_sock.read
+              end
               if data.size > chunksize
                 data = data[0, chunksize]
               end
