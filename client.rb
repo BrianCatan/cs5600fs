@@ -2,15 +2,45 @@ require 'socket'
 require 'digest'
 require 'ipaddress'
 
-# Connect to torrent server
-sock = TCPSocket.open('localhost', ARGV[0].to_i)
-
+# First time launch file creation
 if !Dir.exist? 'Files' 
   Dir.mkdir 'Files'
 end
 
+if !File.exist? 'client.config'
+  config = File.new "client.config", 'w'
+  config.puts "ip: localhost"
+  config.puts "port: 8687"
+  config.puts "serverip: localhost"
+  config.puts "serverport: 8686"
+  config.close
+end
+
+def read_config(config_param)
+  File.foreach("client.config") do |line|
+    if line.split(':')[0] == config_param
+      return line.split(': ')[1].chomp
+    end
+  end
+end
+
+# Connect to torrent server
+sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
+
+def updatetracker(file_name, start_bytes, end_bytes, ipaddress, port)
+  sock.puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
+  msg = sock.gets.chomp
+  if msg == "<updatetracker #{file_name} succ>" 
+    puts "  #{file_name}.track updated"
+  elsif msg == "<updatetracker #{file_name} ferr>"
+    puts "  No tracker for #{file_name}"
+  else
+    puts "  updatetracker failed for #{file_name}"
+  end
+end
+
 # Create thread to manage file requests from other peers
-server = TCPServer.open(ARGV[1].to_i)
+server = TCPServer.open(read_config('port'))
 Thread.new {
   loop {
     begin
@@ -33,12 +63,12 @@ loop do
   
   case command.split()[0]
   
-  when 'createtracker'
-    # createtracker filepath desc yourip yourport
+  when 'SEED'
+    # SEED filepath desc yourip yourport
     input = command.split
     size = File.size("./Files/#{input[1]}")
     md5 = Digest::MD5.file("./Files/#{input[1]}").hexdigest
-    sock.puts "<createtracker #{input[1]} #{size} #{input[2]} #{md5} #{input[3]} #{input[4]}>"
+    sock.puts "<createtracker #{input[1]} #{size} #{input[2]} #{md5} #{read_config('ip')} #{read_config('port')}>"
     msg = sock.gets.chomp
     if msg == "<createtracker succ>" 
       puts "  #{input[1]}.track created"
@@ -47,20 +77,7 @@ loop do
     else
       puts "  createtracker failed for #{input[1]}"
     end
-    
-  when 'updatetracker'
-    # updatetracker filename start_bytes end_bytes ip-address port-number
-    input = command.split
-    sock.puts "<updatetracker #{input[1]} #{input[2]} #{input[3]} #{input[4]} #{input[5]}>"
-    msg = sock.gets.chomp
-    if msg == "<updatetracker #{input[1]} succ>" 
-      puts "  #{input[1]}.track updated"
-    elsif msg == "<updatetracker #{input[1]} ferr>"
-      puts "  No tracker for #{input[1]}"
-    else
-      puts "  updatetracker failed for #{input[1]}"
-    end
-    
+      
   when 'LIST'
     sock.puts "<REQ LIST>"
     output = ''
@@ -107,6 +124,7 @@ loop do
       file = File.open("./Files/#{filename.chomp}", 'wb')
       file.print data
       file.close
+      updatetracker filename, 0, File.size("./Files/#{filename}"), read_config('ip'), read_config('port')
     else 
       puts '  GET failed for #{command.split()[1]}'
     end
@@ -117,8 +135,7 @@ loop do
     
   when 'help'
     puts "  Commands:"
-    puts "  createtracker 'filename' 'description' 'ipaddress' 'portnumber'"
-    puts "  updatetracker 'filename' 'start_bytes' 'end_bytes' 'ipaddress' 'portnumber'"
+    puts "  SEED 'filename' 'description'"
     puts "  LIST"
     puts "  GET 'filename'"
     puts "  exit"
