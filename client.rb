@@ -14,6 +14,7 @@ if !File.exist? 'client.config'
   config.puts "port: 8687"
   config.puts "serverip: localhost"
   config.puts "serverport: 8686"
+  config.puts "chunksize: 1024"
   config.close
 end
 
@@ -25,6 +26,10 @@ def read_config(config_param)
     end
   end
 end
+
+#Read specific set of bytes from a file
+def read_bytes(byte_index)
+	
 
 # Connect to torrent server
 sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
@@ -105,6 +110,8 @@ loop do
     md5 = ''
     ip = ''
     port = ''
+    seederarray = Array.new
+    index = 0
     until input.split()[2] == 'END' or input == '<GET INVALID>' do
       input = sock.gets
       if input.split(':')[0] == '<Filename'
@@ -114,16 +121,25 @@ loop do
       elsif input.split(':')[0] == 'MD5'
         md5 = input.split(': ')[1]
       elsif IPAddress.valid?(input.split(':')[0]) or input.split(':')[0] == 'localhost'
+        
         ip = input.split(':')[0]
         port = input.split(':')[1]
       end
+      seederarray(index) = ip + port
+      index+=1
     end
     
     if input.split()[3] == "#{md5.chomp}>"
       # Contact peer for file
+      seederchunks = Array.new
+      count=0
+      until seederchunks.size == filesize/read_config(chunksize) do
+        seederchunks(count) = seederarray(count%index)
+        count+=1
+      end
       inc_sock = TCPSocket.open(ip, port)
       inc_sock.puts filename
-      inc_sock.puts read_config(chunksize)
+      inc_sock.puts 
       data = inc_sock.read
       file = File.open("./Files/#{filename.chomp}", 'wb')
       file.print data
