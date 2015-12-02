@@ -163,14 +163,27 @@ loop do
             end
             iter += 1
           end
-          print "ptpterminal: "
-          count = 0
-          until count == iter do
-            File.open("./Files/#{filename.chomp}", 'a') { |f| f.print File.binread("./Files/#{filename.chomp}.part#{count}") }
-            File.delete("./Files/#{filename.chomp}.part#{count}")
-            count += 1
-          end
+          s = "finished"
         }
+      end
+      
+      # Loop until all parts are had
+      complete = false
+      until complete do
+        complete = true
+        seederarray.each do |s|
+          if s != "finished"
+            complete = false
+          end
+        sleep 1
+      end
+      
+      print "Constructing File: #{filename.chomp}"
+      iter = 0
+      iter > seederchunks.size do
+        File.open("./Files/#{filename.chomp}", 'a') { |f| f.print File.binread("./Files/#{filename.chomp}.part#{iter}") }
+        File.delete("./Files/#{filename.chomp}.part#{iter}")
+        iter += 1
       end
 
       #updatetracker filename, 0, File.size("./Files/#{filename}"), read_config('ip'), read_config('port')
