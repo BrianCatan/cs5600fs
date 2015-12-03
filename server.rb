@@ -71,7 +71,8 @@ loop do
             # Copy contents of old tracker to new one
             File.open("./Torrents/#{command[1]}.track.tmp", 'w') do |update_tracker|
               File.foreach("./Torrents/#{command[1]}.track") do |line|
-                if line.split(':')[0] != command[4]
+                # Given the ip (line.split(':')[0]) and the port (line.split(':')[0]) are the same, do not rewrite line
+                if !((line.split(':')[0] == command[4]) && (line.split(':')[1] == command[5]))
                   # Write all lines save those targeting updated IP
                   update_tracker.puts line
                 end
