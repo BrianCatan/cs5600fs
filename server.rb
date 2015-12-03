@@ -79,7 +79,7 @@ loop do
                   max_size = line.split(': ')[1].to_i
                 end
               end
-              puts max_size
+              #puts max_size
 
               # Bounds checking
               if command[2].to_i < 0
@@ -95,6 +95,7 @@ loop do
               
               # Append new information to tracker file and delete old tracker
               update_tracker.puts "#{command[4]}:#{command[5]}:#{command[2]}:#{command[3]}:#{Time.now.to_i}"
+               #File"./Torrents/#{command[1]}.track"
               File.delete "./Torrents/#{command[1]}.track"
             end
             # Rename new tracker

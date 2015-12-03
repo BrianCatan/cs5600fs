@@ -15,8 +15,9 @@ end
 sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
 
 def updatetracker(file_name, start_bytes, end_bytes, ipaddress, port)
-  puts "in update"
+  #puts "in update"
   sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
+  #puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
   sock.puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
   msg = sock.gets.chomp
   puts msg
@@ -33,7 +34,7 @@ def run_get(tracker)
   # Get information about peers
   sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
   sock.puts "<GET #{tracker}>"
-  puts "sent request"
+  #puts "sent request"
   input = ''
   filename = ''
   filesize = 0
@@ -70,7 +71,7 @@ def run_get(tracker)
     # Contact peer for file
     seederchunks = Array.new
     seedertimes = Array.new
-    puts "seederarray: #{seederarray}"
+    #puts "seederarray: #{seederarray}"
     seederarray.each do |q|
 	    seedertimes.push(q.split()[0].to_i)
     end
@@ -92,18 +93,14 @@ def run_get(tracker)
     # Create thread to download from each seeder
     seederarray.each do |s|
       Thread.new {
-      puts "thread created"
         ip = s.split()[1]
         port = s.split()[2]            
         iter = 0
-        puts "num chunks: #{seederchunks.length}"
+        #puts "num chunks: #{seederchunks.length}"
         until iter > seederchunks.length do
 			
           if seederchunks[iter].join(" ") == "#{ip} #{port}" #AND Dir["./Files/#{filename}.part#{iter}"].size == 0
-            data = ''
-            puts "inside if"
-            
-            
+            data = ''            
             begin
               inc_sock = TCPSocket.open(ip, port)
               inc_sock.puts "#{filename.chomp} #{chunksize * iter} #{chunksize}"
@@ -122,12 +119,9 @@ def run_get(tracker)
             end
             file = File.open("./Files/#{filename.chomp}.part#{iter}", 'wb')
             file.print data
-            puts "wrote data to file"
             file.close
             inc_sock.close
-            puts "socket closed"
             updatetracker(filename.chomp, 0, (chunksize * iter + chunksize < filesize ? chunksize * iter + chunksize : filesize), ip, port)
-            puts "we update tracker"
           end
           iter += 1
         end
@@ -135,31 +129,33 @@ def run_get(tracker)
       }
     end
     
+    
+    sleep 35
     # Loop until all parts are had
-   complete = false
-    until complete do
-      complete = true
-      seederarray.each do |s|
-        if s != "finished"
-          complete = false
-        end
-      sleep 1
-      end
-      puts complete
-    end
+#   complete = false
+#   puts seederarray.length
+#    until complete do
+#      complete = true
+#      seederarray.each do |s|
+ #       if s != "finished"
+  #        complete = false
+   #     end
+    #  sleep 1
+     # end
+  #    puts complete
+#    end
     
     puts "Constructing File: #{filename.chomp}"
     fcount= 0
-    until fcount > seederchunks.size do
+    until fcount > (seederchunks.length-1) do
       File.open("./Files/#{filename.chomp}", 'a') { |f| f.print File.binread("./Files/#{filename.chomp}.part#{fcount}") }
       File.delete("./Files/#{filename.chomp}.part#{fcount}")
       fcount += 1
     end
-
-    updatetracker filename, 0, File.size("./Files/#{filename}"), read_config('ip'), read_config('port')
-    puts "update after file constructed"
+    filepath = "./Files/#{filename}".chomp
+    updatetracker(filename.chomp, 0, File.size(filepath), read_config('ip'), read_config('port'))
   else 
-    puts '  GET failed for #{command.split()[1]}'
+    puts " GET failed for #{command.split()[1]}"
   end
 end
 
@@ -196,7 +192,7 @@ Thread.new {
       Thread.start(server.accept) do |client|
         message = client.gets
         message = message.split()
-        puts "message received #{message}"
+        #puts "message received #{message}"
         
         if !File.exist? "./Files/#{message[0]}"
 	      message[0] = "#{message[0].part}#{(message[1].to_f/message[2].to_f).ceil}"
