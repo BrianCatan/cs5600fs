@@ -23,7 +23,7 @@ loop do
           
       # Parse command
       case command[0]
-
+      
       when 'createtracker'
         # createtracker filename filesize description md5 ip-address port-number
         puts "#{remote_ip}:#{remote_port} -- CREATETRACKER #{command[1]} INIT"
