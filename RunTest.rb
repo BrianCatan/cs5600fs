@@ -17,7 +17,7 @@ client1 = Thread.new {
     }
     sleep 1
   
-    w.puts 'SEED net.jpg an_icon'
+    w.puts 'SEED cpe.pdf an_filen'
     sleep 120
     w.puts 'exit'
   end
@@ -31,7 +31,7 @@ client2 = Thread.new {
       loop { puts "client2: #{r.gets}" }
     }
     sleep 1
-    w.puts 'SEED sp.mp4 an_episode_of_southpark'
+    w.puts 'SEED banf.jpg an_park'
     sleep 120
     w.puts 'exit'
   end
@@ -51,9 +51,9 @@ until i > 13 do
         sleep 1
         w.puts 'LIST'
         sleep 1
-        w.puts 'GET net.jpg.track'
+        w.puts 'GET cpe.pdf.track'
         sleep 1
-        w.puts 'GET sp.mp4.track'
+        w.puts 'GET banf.jpg.track'
       end
     }
   ")

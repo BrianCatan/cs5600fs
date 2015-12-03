@@ -17,12 +17,12 @@ sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
 def updatetracker(file_name, start_bytes, end_bytes, ipaddress, port)
   #puts "in update"
   sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
-  #puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
+  puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
   sock.puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
   msg = sock.gets.chomp
   puts msg
   if msg == "<updatetracker #{file_name} succ>" 
-    puts "  #{file_name}.track updated"
+    #puts "  #{file_name}.track updated"
   elsif msg == "<updatetracker #{file_name} ferr>"
     puts "  No tracker for #{file_name}"
   else
@@ -76,7 +76,7 @@ def run_get(tracker)
 	    seedertimes.push(q.split()[0].to_i)
     end
     seedertimes.sort
-    
+    #puts seedertimes
     #seederheap = Maxheap.new(seederarray[].split()[0])->new_heap
     chunksize = read_config('chunksize').to_i
     count=0
@@ -84,8 +84,11 @@ def run_get(tracker)
       seederarray.each do |n|
         if n.split()[0].to_i == seedertimes[-1]
 			    seederchunks[count] = n.split()[1,2]
-			    seedertimes.push(seedertimes.pop)
+			    tmp = seedertimes.pop
+			    
+			    seedertimes.unshift(tmp)
 			    count+=1
+			    #puts seedertimes
 	    	end
 	    end
     end
@@ -130,18 +133,18 @@ def run_get(tracker)
     end
     
     
-    sleep 35
+    sleep 40
     # Loop until all parts are had
 #   complete = false
 #   puts seederarray.length
 #    until complete do
 #      complete = true
 #      seederarray.each do |s|
- #       if s != "finished"
-  #        complete = false
-   #     end
-    #  sleep 1
-     # end
+#        if s != "finished"
+#          complete = false
+#        end
+#      sleep 1
+#      end
   #    puts complete
 #    end
     
