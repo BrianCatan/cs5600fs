@@ -84,23 +84,31 @@ def run_get(tracker)
     #seederheap = Maxheap.new(seederarray[].split()[0])->new_heap
     chunksize = read_config('chunksize').to_i
     count=0
-    until seederchunks.length == (filesize.to_f / chunksize.to_f).ceil do
+    until seederchunks.length > (filesize.to_f / chunksize.to_f).ceil do
       seederarray.each do |n|
       #log.puts n.split()[0].class
       #log.puts seedertimes.last.class
         if n.split()[0] == seedertimes.last
 			#log.puts "inside comparison"
-			    seederchunks[count] = n.split()[1,2]
-			    seedertimes.rotate!(-1)
-			    count+=1
-			    log.puts "st: #{seedertimes}"
-			    log.puts "n: #{n.split()[1,2]}"
+			seederchunks[count] = n.split()[1,2]
+			#log.puts "st: #{seedertimes}"
+			#log.puts "n: #{n.split()[1,2]}"
+			#log.puts "sc: #{seederchunks}"
+			seedertimes.unshift seedertimes.pop
+			count+=1
+			
+			    
 	    end
-		
+		#log.puts "seederchunks : #{seederchunks}"
 	  end
     end
+    
     log.puts "seederarray: #{seederarray}"
     log.puts "seederchunks: #{seederchunks}"
+    until seederchunks.length == (filesize.to_f / chunksize.to_f).ceil
+		seederchunks.pop
+	end
+    log.puts "seederchunkslength: #{seederchunks.length}"
     # Create thread to download from each seeder
     #semaphore = Mutex.new
     thr = []

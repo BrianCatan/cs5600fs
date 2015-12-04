@@ -17,7 +17,7 @@ client1 = Thread.new {
     }
     sleep 1
   
-    w.puts 'SEED cpe.pdf an_filen'
+    w.puts 'SEED cpe.pdf old_cpe_homework'
     sleep 120
     w.puts 'exit'
   end
@@ -31,7 +31,7 @@ client2 = Thread.new {
       loop { puts "client2: #{r.gets}" }
     }
     sleep 1
-    w.puts 'SEED banf.jpg an_park'
+    w.puts 'SEED banf.jpg a_park_i_found'
     sleep 120
     w.puts 'exit'
   end
