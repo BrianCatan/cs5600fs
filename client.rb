@@ -2,6 +2,7 @@ require 'socket'
 require 'digest'
 require 'ipaddress'
 require 'thread'
+require 'thwait'
 
 # Read config file method
 def read_config(config_param)
@@ -85,7 +86,7 @@ def run_get(tracker)
     count=0
     until seederchunks.length == (filesize.to_f / chunksize.to_f).ceil do
       seederarray.each do |n|
-        if n.split()[0].to_i == seedertimes[-1]
+        if n.split()[0].to_i == seedertimes.last
 			    seederchunks[count] = n.split()[1,2]
 			    tmp = seedertimes.pop
 			    
@@ -100,9 +101,8 @@ def run_get(tracker)
     # Create thread to download from each seeder
     #semaphore = Mutex.new
     thr = []
-    saindex =0 
-    seederarray.each do |s|
-      thr << Thread.new(s) {
+    seederarray.map! { |s|
+      thr << Thread.new {
       #semaphore.synchronize{
       log.puts "thread opened"
         ip = s.split()[1]
@@ -149,36 +149,37 @@ def run_get(tracker)
           #log.puts "iter #{iter}, other #{seederchunks.length}"
           iter += 1
         end
-        s = "finished"
-        
-        log.puts "s: #{s}"
+        #s.replace("finished")
+        #seederarray[saindex] = s
+        #log.puts "s: #{s}"
+        #log.puts "seederarray: #{seederarray}"
       #}
       
-      
-      }
       log.puts "thread closed"
-      saindex+=1
+      }
+      thr.each {|t| t.join}
       #sleep 1
-    end
+    }
     
-    thr.each do |t|
-		t.join
-	end
-	
+    
+    
+    
+	ThreadsWait.all_waits(*thr)
     #sleep 20
     # Loop until all parts are had
-   complete = false
-   log.puts "seederarray: #{seederarray}"
-    until complete do
-      complete = true
-      seederarray.each do |v|
-        if v != "finished"
-          complete = false
-        end
-      sleep 1
-      end
+ #  complete = false
+   
+ #   until complete do
+ #     complete = true
+ #     log.puts "seederarray: #{seederarray}"
+ #     seederarray.each do |v|
+ #       if v[0] != "finished"
+ #         complete = false
+ #       end
+ #     sleep 1
+ #     end
   #    puts complete
-    end
+ #   end
     
     puts "Constructing File: #{filename.chomp}"
     fcount= 0
