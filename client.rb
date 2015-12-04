@@ -76,7 +76,7 @@ def run_get(tracker)
     seedertimes = Array.new
     #puts "seederarray: #{seederarray}"
     seederarray.each do |q|
-	    seedertimes.push(q.split()[0].to_i)
+	    seedertimes.push(q.split()[0])
     end
     seedertimes.sort
     log.puts "times: #{seedertimes}"
@@ -86,17 +86,20 @@ def run_get(tracker)
     count=0
     until seederchunks.length == (filesize.to_f / chunksize.to_f).ceil do
       seederarray.each do |n|
-        if n.split()[0].to_i == seedertimes.last
+      #log.puts n.split()[0].class
+      #log.puts seedertimes.last.class
+        if n.split()[0] == seedertimes.last
+			#log.puts "inside comparison"
 			    seederchunks[count] = n.split()[1,2]
-			    tmp = seedertimes.pop
-			    
-			    seedertimes.unshift(tmp)
+			    seedertimes.rotate!(-1)
 			    count+=1
-			    #puts seedertimes
-	    	end
+			    log.puts "st: #{seedertimes}"
+			    log.puts "n: #{n.split()[1,2]}"
 	    end
+		
+	  end
     end
-    log.puts "seederarrary: #{seederarray}"
+    log.puts "seederarray: #{seederarray}"
     log.puts "seederchunks: #{seederchunks}"
     # Create thread to download from each seeder
     #semaphore = Mutex.new
@@ -193,6 +196,7 @@ def run_get(tracker)
   else 
     puts " GET failed for #{command.split()[1]}"
   end
+  puts "Done Constructing File"
   log.close
 end
 
