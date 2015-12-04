@@ -17,10 +17,10 @@ sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
 def updatetracker(file_name, start_bytes, end_bytes, ipaddress, port)
   #puts "in update"
   sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
-  puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
+  #puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
   sock.puts "<updatetracker #{file_name} #{start_bytes} #{end_bytes} #{ipaddress} #{port}>"
   msg = sock.gets.chomp
-  puts msg
+  #puts msg
   if msg == "<updatetracker #{file_name} succ>" 
     #puts "  #{file_name}.track updated"
   elsif msg == "<updatetracker #{file_name} ferr>"
@@ -32,6 +32,7 @@ end
 
 def run_get(tracker)
   # Get information about peers
+  log = File.open("log.txt", 'w')
   sock = TCPSocket.open(read_config('serverip'), read_config('serverport'))
   sock.puts "<GET #{tracker}>"
   #puts "sent request"
@@ -76,7 +77,7 @@ def run_get(tracker)
 	    seedertimes.push(q.split()[0].to_i)
     end
     seedertimes.sort
-    #puts seedertimes
+    log.puts seedertimes
     #seederheap = Maxheap.new(seederarray[].split()[0])->new_heap
     chunksize = read_config('chunksize').to_i
     count=0
@@ -92,24 +93,37 @@ def run_get(tracker)
 	    	end
 	    end
     end
-    
+    log.puts "seederarrary: #{seederarray}"
+    log.puts "seederchunks: #{seederchunks}"
     # Create thread to download from each seeder
     seederarray.each do |s|
       Thread.new {
+      log.puts "thread opened"
         ip = s.split()[1]
         port = s.split()[2]            
         iter = 0
-        #puts "num chunks: #{seederchunks.length}"
+        log.puts s
+        #log.puts seederchunks[iter]
+        #log.puts "outside: #{seederchunks[iter][0]} ? #{ip}"
+		#log.puts "outside: #{seederchunks[iter][1]} ? #{port}"
+        #log.puts seederchunks.length
+        #log.puts seederchunks.length.class
+        #log.puts "num chunks: #{seederchunks.length}"
         until iter > seederchunks.length do
-			
-          if seederchunks[iter].join(" ") == "#{ip} #{port}" #AND Dir["./Files/#{filename}.part#{iter}"].size == 0
-            data = ''            
+			#log.puts "inside until"
+			log.puts "iter: #{seederchunks[iter]}"
+          if (seederchunks[iter][0] == ip) && (seederchunks[iter][1] == port) #AND Dir["./Files/#{filename}.part#{iter}"].size == 0
+            data = ''   
+            log.puts "inside ifcheck"         
             begin
+			log.puts "#{seederchunks[iter]}: inside begin"
               inc_sock = TCPSocket.open(ip, port)
+              log.puts "sock opened"
               inc_sock.puts "#{filename.chomp} #{chunksize * iter} #{chunksize}"
               puts "Requesting bytes #{chunksize * iter} up to #{chunksize * iter + chunksize} of #{filename.chomp} from #{ip}:#{port}"
               data = inc_sock.read
             rescue
+              puts "rescued"
               ip = seederchunks[iter + 1].split()[0]
               port = seederchunks[iter + 1].split()[1]
               inc_sock = TCPSocket.open(ip, port)
@@ -120,20 +134,23 @@ def run_get(tracker)
             if data.size > chunksize
               data = data[0, chunksize]
             end
-            file = File.open("./Files/#{filename.chomp}.part#{iter}", 'wb')
+            file = File.open("./Files/#{filename.chomp}.part#{iter}", 'w')
             file.print data
             file.close
             inc_sock.close
             updatetracker(filename.chomp, 0, (chunksize * iter + chunksize < filesize ? chunksize * iter + chunksize : filesize), ip, port)
           end
+          #log.puts "iter #{iter}, other #{seederchunks.length}"
           iter += 1
         end
-        s = "finished"
+        #s = "finished"
+      #log.puts "thread closed"
       }
+      sleep 1
     end
     
     
-    sleep 40
+    sleep 20
     # Loop until all parts are had
 #   complete = false
 #   puts seederarray.length
@@ -160,6 +177,7 @@ def run_get(tracker)
   else 
     puts " GET failed for #{command.split()[1]}"
   end
+  log.close
 end
 
 # First time launch file creation
